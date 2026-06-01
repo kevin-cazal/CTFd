@@ -1,12 +1,15 @@
-name: Docker build image on release
+name: Publish to GHCR
 
 on:
   release:
     types: [published]
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
       tag:
-        description: Image tag (default: latest)
+        description: Image tag
         required: false
         default: latest
 
@@ -20,10 +23,12 @@ jobs:
       - name: Set image name and tag
         run: |
           echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY@L}" >> "${GITHUB_ENV}"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "IMAGE_TAG=${{ github.event.inputs.tag }}" >> "${GITHUB_ENV}"
-          else
+          if [ "${{ github.event_name }}" = "release" ]; then
             echo "IMAGE_TAG=${{ github.event.release.tag_name }}" >> "${GITHUB_ENV}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "IMAGE_TAG=${GITHUB_REF#refs/tags/}" >> "${GITHUB_ENV}"
+          else
+            echo "IMAGE_TAG=${{ github.event.inputs.tag }}" >> "${GITHUB_ENV}"
           fi
       - name: Checkout
         uses: actions/checkout@v5
