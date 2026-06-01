@@ -1,6 +1,6 @@
 import functools
 
-from flask import abort, jsonify, redirect, request, url_for
+from flask import abort, jsonify, redirect, request, session, url_for
 from flask_babel import gettext
 
 from CTFd.cache import cache
@@ -8,7 +8,7 @@ from CTFd.utils import config, get_config
 from CTFd.utils import user as current_user
 from CTFd.utils.config import is_teams_mode
 from CTFd.utils.dates import ctf_ended, ctf_started, ctftime, view_after_ctf
-from CTFd.utils.user import authed, get_current_team, get_current_user, is_admin
+from CTFd.utils.user import authed, get_current_team, get_current_user, get_ip, is_admin
 
 
 def during_ctf_time_only(f):
@@ -159,32 +159,82 @@ def require_team(f):
     return require_team_wrapper
 
 
+# Per-IP ceiling on auth routes (primary limits stay on route decorators)
+AUTH_IP_GUARD = {
+    "auth.login": (500, 60),
+    "auth.register": (200, 60),
+    "auth.reset_password": (100, 60),
+}
+
+
+def get_ratelimit_subject():
+    endpoint = request.endpoint
+
+    if authed():
+        return "user:{}".format(session["id"])
+
+    if endpoint == "auth.login" and request.method == "POST":
+        ident = (request.form.get("name") or "").strip().lower()
+        if ident:
+            return "login:{}".format(ident)
+
+    if endpoint == "auth.register" and request.method == "POST":
+        ident = (request.form.get("email") or "").strip().lower()
+        if ident:
+            return "register:{}".format(ident)
+
+    if endpoint == "auth.reset_password" and request.method == "POST":
+        ident = (request.form.get("email") or "").strip().lower()
+        if ident:
+            return "reset:{}".format(ident)
+
+    return "ip:{}".format(get_ip())
+
+
+def _ratelimit_exceeded_response(limit, interval):
+    resp = jsonify(
+        {
+            "code": 429,
+            "message": "Too many requests. Limit is %s requests in %s seconds"
+            % (limit, interval),
+        }
+    )
+    resp.status_code = 429
+    return resp
+
+
+def _ratelimit_check_and_increment(key, limit, interval):
+    current = cache.get(key)
+    if current and int(current) > limit - 1:  # -1 to align expected limit with count
+        return _ratelimit_exceeded_response(limit, interval)
+    if current is None:
+        cache.set(key, 1, timeout=interval)
+    else:
+        cache.set(key, int(current) + 1, timeout=interval)
+    return None
+
+
 def ratelimit(method="POST", limit=50, interval=300, key_prefix="rl"):
     def ratelimit_decorator(f):
         @functools.wraps(f)
         def ratelimit_function(*args, **kwargs):
-            ip_address = current_user.get_ip()
-            key = "{}:{}:{}".format(key_prefix, ip_address, request.endpoint)
-            current = cache.get(key)
-
             if request.method == method:
-                if (
-                    current and int(current) > limit - 1
-                ):  # -1 in order to align expected limit with the real value
-                    resp = jsonify(
-                        {
-                            "code": 429,
-                            "message": "Too many requests. Limit is %s requests in %s seconds"
-                            % (limit, interval),
-                        }
-                    )
-                    resp.status_code = 429
+                subject = get_ratelimit_subject()
+                key = "{}:{}:{}".format(key_prefix, subject, request.endpoint)
+                resp = _ratelimit_check_and_increment(key, limit, interval)
+                if resp:
                     return resp
-                else:
-                    if current is None:
-                        cache.set(key, 1, timeout=interval)
-                    else:
-                        cache.set(key, int(current) + 1, timeout=interval)
+
+                guard = AUTH_IP_GUARD.get(request.endpoint)
+                if guard:
+                    ip_limit, ip_interval = guard
+                    ip_key = "{}:ip:{}:{}".format(
+                        key_prefix, get_ip(), request.endpoint
+                    )
+                    resp = _ratelimit_check_and_increment(ip_key, ip_limit, ip_interval)
+                    if resp:
+                        return resp
+
             return f(*args, **kwargs)
 
         return ratelimit_function
