@@ -54,6 +54,32 @@ Or you can use Docker Compose with the following command from the source reposit
 
 `docker compose up`
 
+### GitHub Container Registry (GHCR)
+
+Published images for this fork:
+
+```bash
+docker pull ghcr.io/manta-epitech-academy/ctfd:latest
+docker run -p 8000:8000 ghcr.io/manta-epitech-academy/ctfd:latest
+```
+
+**When images are published**
+
+| Trigger | Tags pushed |
+| --- | --- |
+| Push to `master` | `latest`, `sha-<commit>` |
+| Git tag `v*` (e.g. `v3.8.5-custom`) | `<tag>`, `latest` |
+| GitHub Release (published) | release tag, `latest` |
+| Manual | Actions → **Publish to GHCR** → Run workflow |
+
+**If push fails with `403 Forbidden` on GHCR**
+
+1. **Organization** [Manta-Epitech-Academy](https://github.com/organizations/Manta-Epitech-Academy/settings/actions): enable **Read and write permissions** for `GITHUB_TOKEN` under Workflow permissions.
+2. **Organization** package settings: allow members/workflows to publish packages for this repository.
+3. After the first successful push, open the package on GHCR → **Package settings** → **Manage Actions access** → grant the **CTFd** repository **Write** access.
+
+Optional: set repository variable `GHCR_IMAGE_NAME` (e.g. `ghcr.io/kevin-cazal/ctfd`) to publish under another namespace.
+
 Check out the [CTFd docs](https://docs.ctfd.io/) for [deployment options](https://docs.ctfd.io/docs/deployment/installation) and the [Getting Started](https://docs.ctfd.io/tutorials/getting-started/) guide
 
 ## Live Demo
