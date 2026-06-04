@@ -23,7 +23,11 @@ from CTFd.utils.security.email import (
     generate_password_reset_token,
 )
 
-PROVIDERS = {"smtp": SMTPEmailProvider, "mailgun": MailgunEmailProvider, "mailjet": MailjetEmailProvider}
+PROVIDERS = {
+    "smtp": SMTPEmailProvider,
+    "mailgun": MailgunEmailProvider,
+    "mailjet": MailjetEmailProvider,
+}
 
 
 def sendmail(addr, text, subject="Message from {ctf_name}"):
