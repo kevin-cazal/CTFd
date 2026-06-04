@@ -208,9 +208,9 @@ class ServerConfig(object):
     MAILGUN_API_KEY: str = empty_str_cast(config_ini["email"]["MAILGUN_API_KEY"])
 
     MAILGUN_BASE_URL: str = empty_str_cast(config_ini["email"]["MAILGUN_BASE_URL"])
-    
+
     MAILJET_APIKEY_PUBLIC: str = empty_str_cast(config_ini["email"]["MAILJET_APIKEY_PUBLIC"])
-    
+
     MAILJET_APIKEY_PRIVATE: str = empty_str_cast(config_ini["email"]["MAILJET_APIKEY_PRIVATE"])
 
     MAILJET_BASE_URL: str = empty_str_cast(config_ini["email"]["MAILJET_BASE_URL"])

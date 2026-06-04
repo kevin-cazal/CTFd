@@ -6,12 +6,18 @@ on:
     branches:
       - master
     paths:
-      - 'CTFd/themes/**'
+      - 'CTFd/themes/**/assets/**'
+      - 'CTFd/themes/**/package.json'
+      - 'CTFd/themes/**/yarn.lock'
+      - 'CTFd/themes/**/vite.config.js'
   pull_request:
     branches:
       - master
     paths:
-      - 'CTFd/themes/**'
+      - 'CTFd/themes/**/assets/**'
+      - 'CTFd/themes/**/package.json'
+      - 'CTFd/themes/**/yarn.lock'
+      - 'CTFd/themes/**/vite.config.js'
 
 jobs:
   build:
