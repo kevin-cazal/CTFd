@@ -286,6 +286,17 @@ class EmailSettingsForm(BaseForm):
     )
     mailgun_api_key = StringField("Mailgun API Key", description="Mailgun API Key")
 
+    # Mailjet Settings (custom)
+    mailjet_base_url = StringField(
+        "Mailjet API Base URL", description="Mailjet API Base URL"
+    )
+    mailjet_apikey_public = StringField(
+        "Mailjet API Key Public", description="Mailjet API Key Public"
+    )
+    mailjet_apikey_private = StringField(
+        "Mailjet API Key Private", description="Mailjet API Key Private"
+    )
+
     # Registration Email
     successful_registration_email_subject = StringField(
         "Subject",

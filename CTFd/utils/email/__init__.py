@@ -16,13 +16,14 @@ from CTFd.utils import get_config
 from CTFd.utils.config import get_mail_provider
 from CTFd.utils.email.providers.mailgun import MailgunEmailProvider
 from CTFd.utils.email.providers.smtp import SMTPEmailProvider
+from CTFd.utils.email.providers.mailjet import MailjetEmailProvider
 from CTFd.utils.formatters import safe_format
 from CTFd.utils.security.email import (
     generate_email_confirm_token,
     generate_password_reset_token,
 )
 
-PROVIDERS = {"smtp": SMTPEmailProvider, "mailgun": MailgunEmailProvider}
+PROVIDERS = {"smtp": SMTPEmailProvider, "mailgun": MailgunEmailProvider, "mailjet": MailjetEmailProvider}
 
 
 def sendmail(addr, text, subject="Message from {ctf_name}"):

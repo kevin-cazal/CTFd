@@ -9,6 +9,10 @@
 
 	{% set mailgun_base_url = mailgun_base_url if mailgun_base_url is defined and mailgun_base_url != None else "" %}
 	{% set mailgun_api_key = mailgun_api_key if mailgun_api_key is defined and mailgun_api_key != None else "" %}
+	
+	{% set mailjet_base_url = mailjet_base_url if mailjet_base_url is defined and mailjet_base_url != None else "" %}
+	{% set mailjet_apikey_public = mailjet_apikey_public if mailjet_apikey_public is defined and mailjet_apikey_public != None else "" %}
+	{% set mailjet_apikey_private = mailjet_apikey_private if mailjet_apikey_private is defined and mailjet_apikey_private != None else "" %}
 
 	{% set formcls = Forms.config.EmailSettingsForm %}
 
@@ -36,6 +40,9 @@
 		mail_tls=mail_tls,
 		mailgun_base_url=mailgun_base_url,
 		mailgun_api_key=mailgun_api_key,
+		mailjet_base_url=mailjet_base_url,
+		mailjet_apikey_public=mailjet_apikey_public,
+		mailjet_apikey_private=mailjet_apikey_private,
 		successful_registration_email_subject=successful_registration_email_subject,
 		successful_registration_email_body=successful_registration_email_body,
 		verification_email_subject=verification_email_subject,
@@ -158,6 +165,29 @@
 					{{ form.mailgun_api_key(class="form-control") }}
 					<small class="form-text text-muted">
 						{{ form.mailgun_api_key.description }}
+					</small>
+				</div>
+				<div class="alert alert-warning" role="alert">
+				Custom Email Provider</div>
+				<div class="form-group">
+					{{ form.mailjet_base_url.label() }}
+					{{ form.mailjet_base_url(class="form-control") }}
+					<small class="form-text text-muted">
+						{{ form.mailjet_base_url.description }}
+					</small>
+				</div>
+				<div class="form-group">
+					{{ form.mailjet_apikey_public.label() }}
+					{{ form.mailjet_apikey_public(class="form-control") }}
+					<small class="form-text text-muted">
+						{{ form.mailjet_apikey_public.description }}
+					</small>
+				</div>
+				<div class="form-group">
+					{{ form.mailjet_apikey_private.label() }}
+					{{ form.mailjet_apikey_private(class="form-control") }}
+					<small class="form-text text-muted">
+						{{ form.mailjet_apikey_private.description }}
 					</small>
 				</div>
 			</div>

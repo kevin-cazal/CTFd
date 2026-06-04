@@ -56,7 +56,7 @@ def is_scoreboard_frozen():
 
 
 def can_send_mail():
-    return mailserver() or mailgun()
+    return mailserver() or mailgun() or mailjet()
 
 
 def get_mail_provider():
@@ -67,16 +67,44 @@ def get_mail_provider():
         return "smtp"
     if get_config("mailgun_api_key") and get_config("mailgun_base_url"):
         return "mailgun"
+    if (
+        get_config("mailjet_apikey_public")
+        and get_config("mailjet_apikey_private")
+        and get_config("mailjet_base_url")
+    ):
+        return "mailjet"
     if app.config.get("MAIL_SERVER") and app.config.get("MAIL_PORT"):
         return "smtp"
     if app.config.get("MAILGUN_API_KEY") and app.config.get("MAILGUN_BASE_URL"):
         return "mailgun"
+    if (
+        app.config.get("MAILJET_APIKEY_PUBLIC")
+        and app.config.get("MAILJET_APIKEY_PRIVATE")
+        and app.config.get("MAILJET_BASE_URL")
+    ):
+        return "mailjet"
 
 
 def mailgun():
     if app.config.get("MAILGUN_API_KEY") and app.config.get("MAILGUN_BASE_URL"):
         return True
     if get_config("mailgun_api_key") and get_config("mailgun_base_url"):
+        return True
+    return False
+
+
+def mailjet():
+    if (
+        app.config.get("MAILJET_APIKEY_PUBLIC")
+        and app.config.get("MAILJET_APIKEY_PRIVATE")
+        and app.config.get("MAILJET_BASE_URL")
+    ):
+        return True
+    if (
+        get_config("mailjet_apikey_public")
+        and get_config("mailjet_apikey_private")
+        and get_config("mailjet_base_url")
+    ):
         return True
     return False
 
