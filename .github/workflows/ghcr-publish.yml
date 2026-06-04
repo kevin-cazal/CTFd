@@ -4,6 +4,8 @@ on:
   release:
     types: [published]
   push:
+    branches:
+      - master
     tags:
       - "v*"
   workflow_dispatch:
@@ -13,6 +15,10 @@ on:
         required: false
         default: latest
 
+concurrency:
+  group: ghcr-publish-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -20,16 +26,39 @@ jobs:
       contents: read
       packages: write
     steps:
-      - name: Set image name and tag
+      - name: Set image name and tags
+        id: image
         run: |
-          echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY@L}" >> "${GITHUB_ENV}"
-          if [ "${{ github.event_name }}" = "release" ]; then
-            echo "IMAGE_TAG=${{ github.event.release.tag_name }}" >> "${GITHUB_ENV}"
-          elif [ "${{ github.event_name }}" = "push" ]; then
-            echo "IMAGE_TAG=${GITHUB_REF#refs/tags/}" >> "${GITHUB_ENV}"
+          if [ -n "${{ vars.GHCR_IMAGE_NAME }}" ]; then
+            image_name="${{ vars.GHCR_IMAGE_NAME }}"
           else
-            echo "IMAGE_TAG=${{ github.event.inputs.tag }}" >> "${GITHUB_ENV}"
+            image_name="ghcr.io/${GITHUB_REPOSITORY@L}"
           fi
+
+          if [ "${{ github.event_name }}" = "release" ]; then
+            image_tag="${{ github.event.release.tag_name }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            image_tag="${GITHUB_REF#refs/tags/}"
+          elif [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            image_tag="latest"
+            image_tag_sha="sha-${GITHUB_SHA::7}"
+          else
+            image_tag="${{ github.event.inputs.tag }}"
+          fi
+
+          {
+            echo "name=${image_name}"
+            echo "tag=${image_tag}"
+            echo "tags<<EOF"
+            echo "${image_name}:${image_tag}"
+            if [ -n "${image_tag_sha:-}" ]; then
+              echo "${image_name}:${image_tag_sha}"
+            fi
+            if [ "${image_tag}" != "latest" ]; then
+              echo "${image_name}:latest"
+            fi
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
       - name: Checkout
         uses: actions/checkout@v5
       - name: Set up QEMU
@@ -40,7 +69,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -48,6 +77,6 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-            ${{ env.IMAGE_NAME }}:latest
+          provenance: false
+          sbom: false
+          tags: ${{ steps.image.outputs.tags }}
