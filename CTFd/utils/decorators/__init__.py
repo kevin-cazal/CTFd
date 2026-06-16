@@ -163,7 +163,7 @@ def require_team(f):
 AUTH_IP_GUARD = {
     "auth.login": (500, 60),
     "auth.register": (200, 60),
-    "auth.reset_password": (100, 60),
+    "auth.reset_password": (2000, 60),
 }
 
 
@@ -184,6 +184,9 @@ def get_ratelimit_subject():
             return "register:{}".format(ident)
 
     if endpoint == "auth.reset_password" and request.method == "POST":
+        token = request.view_args.get("data") if request.view_args else None
+        if token:
+            return "reset-token:{}".format(token)
         ident = (request.form.get("email") or "").strip().lower()
         if ident:
             return "reset:{}".format(ident)
